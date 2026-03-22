@@ -98,7 +98,7 @@ const AppHeader: React.FC = () => {
               src="./images/logo/logo-dark.svg"
               alt="Logo"
             /> */}
-            <h1 className="text-2xl font-bold text-gray-800 dark:text-white/90">Event Buzz</h1>
+            <h1 className="text-2xl font-bold text-gray-800 dark:text-white/90">Event Nest</h1>
           </Link>
 
           <button
