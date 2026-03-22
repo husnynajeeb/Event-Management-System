@@ -1,0 +1,68 @@
+version: "3.8"
+
+services:
+  user-service:
+    build: ./user-service
+    image: user-service:latest
+    container_name: user-service
+    ports:
+      - "4003:4003"
+    env_file:
+      - ./user-service/.env
+
+  review-service:
+    build: ./review-service
+    image: review-service:latest
+    container_name: review-service
+    ports:
+      - "4002:4002"
+    env_file:
+      - ./review-service/.env
+    environment:
+      EVENT_URL: http://event-service:4000
+      USER_URL: http://user-service:4003
+
+  booking-service:
+    build: ./booking-service
+    image: booking-service:latest
+    container_name: booking-service
+    ports:
+      - "4001:4001"
+    env_file:
+      - ./booking-service/.env
+    environment:
+      EVENT_URL: http://event-service:4000
+      USER_URL: http://user-service:4003
+
+  event-service:
+    build: ./event-service
+    image: event-service:latest
+    container_name: event-service
+    ports:
+      - "4000:4000"
+    env_file:
+      - ./event-service/.env
+    environment:
+      USER_URL: http://user-service:4003
+
+  api-gateway:
+    build: ./api-gateway
+    image: api-gateway:latest
+    container_name: api-gateway
+    ports:
+      - "3001:3001"
+    env_file:
+      - ./api-gateway/.env
+    environment:
+      USER_URL: http://user-service:4003
+      EVENT_URL: http://event-service:4000
+      BOOKING_URL: http://booking-service:4001
+      REVIEW_URL: http://review-service:4002
+    depends_on:
+      - user-service
+      - event-service
+      - booking-service
+      - review-service
+
+volumes:
+  postgres_data:
