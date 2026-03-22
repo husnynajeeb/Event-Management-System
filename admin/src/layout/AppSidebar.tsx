@@ -301,7 +301,7 @@ const AppSidebar: React.FC = () => {
             //     height={40}
             //   />
             // </>
-            <h1 className="text-2xl font-bold text-gray-800 dark:text-white/90">Event Buzz</h1>
+            <h1 className="text-2xl font-bold text-gray-800 dark:text-white/90"></h1>
           ) : (
             // <Image
             //   src="/images/logo/logo-icon.svg"
@@ -309,7 +309,7 @@ const AppSidebar: React.FC = () => {
             //   width={32}
             //   height={32}
             // />
-            <h1 className="text-2xl font-bold text-gray-800 dark:text-white/90">Event Buzz</h1>
+            <h1 className="text-2xl font-bold text-gray-800 dark:text-white/90"></h1>
           )}
         </Link>
       </div>
