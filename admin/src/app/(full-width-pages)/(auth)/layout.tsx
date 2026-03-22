@@ -28,7 +28,7 @@ export default function AuthLayout({
                     src="./images/logo/auth-logo.svg"
                     alt="Logo"
                   /> */}
-                  <h1 className="text-6xl font-bold text-brand-500 dark:text-white/90">Event Buzz</h1>
+                  <h1 className="text-6xl font-bold text-brand-500 dark:text-white/90">Event Nest</h1>
                 </Link>
                 <p className="text-center text-gray-400 dark:text-white/60">
                   Event Management System

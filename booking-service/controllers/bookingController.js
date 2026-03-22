@@ -1,6 +1,8 @@
 const Booking = require("../models/Booking");
 const { validateEvent, updateEvent } = require("../services/eventServiceClient");
-// Create a new booking
+
+
+// Create a new booking 
 exports.createBooking = async (req, res) => {
   try {
     const now = new Date();
