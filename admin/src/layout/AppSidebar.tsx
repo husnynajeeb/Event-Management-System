@@ -238,6 +238,7 @@ const AppSidebar: React.FC = () => {
   }, [pathname,isActive]);
 
   useEffect(() => {
+
     // Set the height of the submenu items when the submenu is opened
     if (openSubmenu !== null) {
       const key = `${openSubmenu.type}-${openSubmenu.index}`;
@@ -301,7 +302,7 @@ const AppSidebar: React.FC = () => {
             //     height={40}
             //   />
             // </>
-            <h1 className="text-2xl font-bold text-gray-800 dark:text-white/90"></h1>
+            <h1 className="text-2xl font-bold text-gray-800 dark:text-white/90">Event Nest</h1>
           ) : (
             // <Image
             //   src="/images/logo/logo-icon.svg"
@@ -309,7 +310,7 @@ const AppSidebar: React.FC = () => {
             //   width={32}
             //   height={32}
             // />
-            <h1 className="text-2xl font-bold text-gray-800 dark:text-white/90"></h1>
+            <h1 className="text-2xl font-bold text-gray-800 dark:text-white/90">Event Nest</h1>
           )}
         </Link>
       </div>
