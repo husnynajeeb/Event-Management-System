@@ -36,7 +36,7 @@ export class AuthService {
             data: {
                 ...data,
                 password: hashedPassword,
-                role: Role.USER,
+                role: data.role ?? Role.USER,
                 isActive: true
             }
         })
