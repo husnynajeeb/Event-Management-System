@@ -8,11 +8,14 @@ import { getBookingServiceUrl } from "@/lib/bookingClient";
 
 type Booking = {
   booking_id: string;
+  booking_reference?: string;
   customer_name: string;
   email: string;
   phone_number: string;
   event_id: string;
   event_name: string;
+  event_start_date?: string;
+  event_end_date?: string;
   seat_number?: string;
   ticket_price: number;
   booking_date: string;
@@ -31,24 +34,30 @@ export default function BookingDetailsPage() {
   useEffect(() => {
     async function load() {
       if (!id) return;
+
       try {
         setLoading(true);
         setError(null);
+
         const token = getAuthTokenFromCookie();
         if (!token) {
           setError("You are not signed in.");
           return;
         }
+
         const res = await fetch(`${getBookingServiceUrl()}/bookings/${id}`, {
           headers: { Authorization: `Bearer ${token}` },
         });
+
         const data = (await res.json().catch(() => ({}))) as
           | Booking
           | { error?: string };
+
         if (!res.ok) {
           setError((data as any)?.error || "Failed to load booking.");
           return;
         }
+
         setBooking(data as Booking);
       } catch {
         setError("Something went wrong while loading booking.");
@@ -56,22 +65,29 @@ export default function BookingDetailsPage() {
         setLoading(false);
       }
     }
+
     void load();
   }, [id]);
 
-  if (loading)
+  if (loading) {
     return (
       <p className="text-sm text-gray-500 dark:text-gray-400">
         Loading booking...
       </p>
     );
-  if (error) return <p className="text-sm text-error-500">{error}</p>;
-  if (!booking)
+  }
+
+  if (error) {
+    return <p className="text-sm text-error-500">{error}</p>;
+  }
+
+  if (!booking) {
     return (
       <p className="text-sm text-gray-500 dark:text-gray-400">
         Booking not found.
       </p>
     );
+  }
 
   return (
     <div className="rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-white/[0.03] lg:p-6">
@@ -87,7 +103,7 @@ export default function BookingDetailsPage() {
             Edit
           </Link>
           <Link
-            href={`/booking-management/view-bookings/${booking.event_id}`}
+            href="/booking-management/my-bookings"
             className="rounded-lg border border-gray-300 px-3 py-2 text-xs hover:bg-gray-50 dark:border-gray-700 dark:hover:bg-gray-800"
           >
             Back
@@ -95,41 +111,51 @@ export default function BookingDetailsPage() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 gap-3 text-sm md:grid-cols-2">
+      <div className="grid grid-cols-1 gap-3 text-sm md:grid-cols-2  border-gray-200 text-gray-700 dark:border-gray-700  dark:text-gray-200">
         <p>
-          <span className="font-medium">Booking ID:</span> {booking.booking_id}
+          <span className="font-medium  text-gray-500">Booking ID:</span> {booking.booking_id}
         </p>
         <p>
-          <span className="font-medium">Event:</span> {booking.event_name}
+          <span className="font-medium  text-gray-500">Booking Reference:</span>{" "}
+          {booking.booking_reference || booking.booking_id}
         </p>
         <p>
-          <span className="font-medium">Customer:</span> {booking.customer_name}
+          <span className="font-medium  text-gray-500">Event:</span> {booking.event_name}
         </p>
         <p>
-          <span className="font-medium">Email:</span> {booking.email}
+          <span className="font-medium  text-gray-500">Customer:</span> {booking.customer_name}
         </p>
         <p>
-          <span className="font-medium">Phone:</span> {booking.phone_number}
+          <span className="font-medium  text-gray-500">Email:</span> {booking.email}
         </p>
         <p>
-          <span className="font-medium">Ticket Price:</span> {booking.ticket_price}
+          <span className="font-medium  text-gray-500">Phone:</span> {booking.phone_number}
         </p>
         <p>
-          <span className="font-medium">Seat Number:</span>{" "}
+          <span className="font-medium  text-gray-500">Ticket Price:</span> LKR{" "}
+          {booking.ticket_price}
+        </p>
+        <p>
+          <span className="font-medium  text-gray-500">Seat Number:</span>{" "}
           {booking.seat_number || "-"}
         </p>
         <p>
-          <span className="font-medium">Booking Date:</span>{" "}
+          <span className="font-medium  text-gray-500">Event Date:</span>{" "}
+          {booking.event_start_date
+            ? new Date(booking.event_start_date).toLocaleString()
+            : "-"}
+        </p>
+        <p>
+          <span className="font-medium  text-gray-500">Booked On:</span>{" "}
           {booking.booking_date
             ? new Date(booking.booking_date).toLocaleString()
             : "-"}
         </p>
         <p>
-          <span className="font-medium">Booking Time:</span>{" "}
+          <span className="font-medium  text-gray-500">Booking Time:</span>{" "}
           {booking.booking_time || "-"}
         </p>
       </div>
     </div>
   );
 }
-

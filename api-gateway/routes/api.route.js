@@ -22,6 +22,9 @@ router.use("/users", (req, res) =>
 router.use("/bookings", (req, res) =>
   proxyToService(req, res, process.env.BOOKING_URL),
 );
+router.use("/admin/bookings", (req, res) =>
+  proxyToService(req, res, process.env.BOOKING_URL),
+);
 router.use("/reviews", (req, res) =>
   proxyToService(req, res, process.env.REVIEW_URL),
 );

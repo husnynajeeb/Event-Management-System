@@ -317,3 +317,32 @@ export async function deleteEventImage(req, res) {
     res.status(400).json({ message: error.message });
   }
 }
+
+
+export async function updateEventSeats(req, res) {
+  try {
+    const { id } = req.params;
+    const { seats } = req.body;
+
+    if (!Array.isArray(seats)) {
+      return res.status(400).json({ message: "Seats array is required." });
+    }
+
+    const event = await Event.findByIdAndUpdate(
+      id,
+      { seats },
+      { new: true, runValidators: true }
+    );
+
+    if (!event) {
+      return res.status(404).json({ message: "Event not found" });
+    }
+
+    res.status(200).json({
+      message: "Event seats updated successfully",
+      event,
+    });
+  } catch (error) {
+    res.status(400).json({ message: error.message });
+  }
+}

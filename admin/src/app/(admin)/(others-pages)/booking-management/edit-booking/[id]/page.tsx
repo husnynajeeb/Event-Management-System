@@ -9,6 +9,7 @@ import { getEventServiceUrl } from "@/lib/eventClient";
 
 type Booking = {
   booking_id: string;
+  booking_reference?: string; // ✅ ADD THIS
   customer_name: string;
   email: string;
   phone_number: string;

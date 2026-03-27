@@ -27,6 +27,9 @@ app.get("/", (req, res) => {
 const bookingRoutes = require("./routes/bookingRoutes");
 app.use("/bookings", bookingRoutes);
 
+const adminBookingRoutes = require("./routes/adminBookingRoutes");
+app.use("/admin/bookings", adminBookingRoutes);
+
 // Swagger setup
 const { swaggerUi, specs } = require("./swagger");
 app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(specs));

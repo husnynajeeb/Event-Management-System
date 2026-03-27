@@ -5,6 +5,7 @@ import {
   getEventById,
   getEvents,
   updateEvent,
+  updateEventSeats,
   uploadCoverImage,
   uploadGalleryImages,
   deleteEventImage,
@@ -432,5 +433,8 @@ eventRouter.post(
  *         description: Event or image not found
  */
 eventRouter.delete("/:id/image", validateAdmin, deleteEventImage);
+
+// seat update route for booking integration
+eventRouter.put("/:id/seats", updateEventSeats);
 
 export default eventRouter;

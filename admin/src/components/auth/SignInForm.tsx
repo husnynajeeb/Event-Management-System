@@ -21,6 +21,7 @@ export default function SignInForm() {
   const [password, setPassword] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
   return (
     <div className="flex flex-col flex-1 lg:w-1/2 w-full">
       {/* <div className="w-full max-w-md sm:pt-10 mx-auto mb-5">
@@ -128,6 +129,13 @@ export default function SignInForm() {
                   }
 
                   setAuthTokenCookie(data.accessToken as string);
+
+                  // Save user details for role-based UI
+                  if (data.user) {
+                    localStorage.setItem("role", data.user.role);
+                    localStorage.setItem("user", JSON.stringify(data.user));
+                  }
+
                   const token = getAuthTokenFromCookie();
                   if (!token) {
                     setError("Unable to persist session token. Please try again.");
@@ -203,7 +211,6 @@ export default function SignInForm() {
                 </div>
               </div>
             </form>
-
           </div>
         </div>
       </div>

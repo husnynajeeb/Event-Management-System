@@ -8,6 +8,7 @@ import { getBookingServiceUrl } from "@/lib/bookingClient";
 
 type Booking = {
   _id: string;
+  booking_reference?: string; // ✅ ADD THIS
   customer_name: string;
   email: string;
   phone_number: string;
