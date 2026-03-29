@@ -1,0 +1,51 @@
+name: Event Service CI/CD
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "event-service/**"
+      - ".github/workflows/event-service-ci-cd.yml"
+  pull_request:
+    branches: [main]
+    paths:
+      - "event-service/**"
+      - ".github/workflows/event-service-ci-cd.yml"
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: ./event-service
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Verify files
+        run: |
+          node -v
+          npm -v
+          ls
+
+      - name: Build Docker image
+        run: docker build -t ${{ secrets.DOCKERHUB_USERNAME }}/event-service:latest .
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Push Docker image
+        run: docker push ${{ secrets.DOCKERHUB_USERNAME }}/event-service:latest
