@@ -9,6 +9,8 @@ services:
       - "4003:4003"
     env_file:
       - ./user-service/.env
+    environment:
+      DATABASE_URL: "postgresql://postgres:postgres123@host.docker.internal:5432/userdb"
 
   review-service:
     build: ./review-service

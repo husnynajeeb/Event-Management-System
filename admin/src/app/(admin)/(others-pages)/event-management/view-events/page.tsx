@@ -20,17 +20,29 @@ export default function ViewEventsPage() {
   const [error, setError] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [eventToDelete, setEventToDelete] = useState<EventItem | null>(null);
+  const [userRole, setUserRole] = useState<string | null>(null);
+
+  useEffect(() => {
+    const role = localStorage.getItem("role");
+    setUserRole(role);
+  }, []);
 
   async function loadEvents() {
     try {
       setLoading(true);
       setError(null);
       const res = await fetch(`${getEventServiceUrl()}/events`);
-      const data = (await res.json().catch(() => [])) as EventItem[] | { message?: string };
+      const data = (await res.json().catch(() => [])) as
+        | EventItem[]
+        | { message?: string };
+
       if (!res.ok) {
-        setError((data as { message?: string })?.message || "Failed to fetch events.");
+        setError(
+          (data as { message?: string })?.message || "Failed to fetch events.",
+        );
         return;
       }
+
       setEvents(Array.isArray(data) ? data : []);
     } catch {
       setError("Something went wrong while fetching events.");
@@ -47,6 +59,7 @@ export default function ViewEventsPage() {
     try {
       setDeletingId(id);
       const token = getAuthTokenFromCookie();
+
       if (!token) {
         setError("You are not signed in.");
         return;
@@ -58,7 +71,11 @@ export default function ViewEventsPage() {
           Authorization: `Bearer ${token}`,
         },
       });
-      const data = (await res.json().catch(() => ({}))) as { message?: string };
+
+      const data = (await res.json().catch(() => ({}))) as {
+        message?: string;
+      };
+
       if (!res.ok) {
         setError(data.message || "Failed to delete event.");
         return;
@@ -73,18 +90,30 @@ export default function ViewEventsPage() {
     }
   }
 
+  const isAdmin = userRole === "ADMIN";
+
   return (
     <div className="rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-white/[0.03] lg:p-6">
       <div className="mb-4 flex items-center justify-between">
         <h3 className="text-lg font-semibold text-gray-800 dark:text-white/90">
           View Events
         </h3>
-        <Link href="/event-management/create-event" className="rounded-lg bg-brand-500 px-3 py-2 text-xs font-medium text-white hover:bg-brand-600">
-          + Create Event
-        </Link>
+
+        {isAdmin && (
+          <Link
+            href="/event-management/create-event"
+            className="rounded-lg bg-brand-500 px-3 py-2 text-xs font-medium text-white hover:bg-brand-600"
+          >
+            + Create Event
+          </Link>
+        )}
       </div>
 
-      {loading && <p className="text-sm text-gray-500 dark:text-gray-400">Loading events...</p>}
+      {loading && (
+        <p className="text-sm text-gray-500 dark:text-gray-400">
+          Loading events...
+        </p>
+      )}
       {error && <p className="mb-3 text-sm text-error-500">{error}</p>}
 
       {!loading && (
@@ -92,38 +121,79 @@ export default function ViewEventsPage() {
           <table className="min-w-full border-collapse">
             <thead>
               <tr className="border-b border-gray-200 dark:border-gray-700">
-                <th className="px-3 py-2 text-left text-xs text-gray-500">Title</th>
-                <th className="px-3 py-2 text-left text-xs text-gray-500">Location</th>
-                <th className="px-3 py-2 text-left text-xs text-gray-500">Start</th>
-                <th className="px-3 py-2 text-left text-xs text-gray-500">Status</th>
-                <th className="px-3 py-2 text-left text-xs text-gray-500">Action</th>
+                <th className="px-3 py-2 text-left text-xs text-gray-500">
+                  Title
+                </th>
+                <th className="px-3 py-2 text-left text-xs text-gray-500">
+                  Location
+                </th>
+                <th className="px-3 py-2 text-left text-xs text-gray-500">
+                  Start
+                </th>
+                <th className="px-3 py-2 text-left text-xs text-gray-500">
+                  Status
+                </th>
+                <th className="px-3 py-2 text-left text-xs text-gray-500">
+                  Action
+                </th>
               </tr>
             </thead>
             <tbody>
               {events.length === 0 && (
                 <tr>
-                  <td className="px-3 py-6 text-center text-sm text-gray-500" colSpan={5}>
+                  <td
+                    className="px-3 py-6 text-center text-sm text-gray-500"
+                    colSpan={5}
+                  >
                     No events found.
                   </td>
                 </tr>
               )}
+
               {events.map((event) => (
-                <tr key={event._id} className="border-b border-gray-100 dark:border-gray-800">
-                  <td className="px-3 py-3 text-sm text-gray-800 dark:text-white/90">{event.title}</td>
-                  <td className="px-3 py-3 text-sm text-gray-600 dark:text-gray-300">{event.location || "-"}</td>
-                  <td className="px-3 py-3 text-sm text-gray-600 dark:text-gray-300">{new Date(event.start).toLocaleString()}</td>
-                  <td className="px-3 py-3 text-sm text-gray-600 dark:text-gray-300">{event.status || "active"}</td>
+                <tr
+                  key={event._id}
+                  className="border-b border-gray-100 dark:border-gray-800"
+                >
+                  <td className="px-3 py-3 text-sm text-gray-800 dark:text-white/90">
+                    {event.title}
+                  </td>
+                  <td className="px-3 py-3 text-sm text-gray-600 dark:text-gray-300">
+                    {event.location || "-"}
+                  </td>
+                  <td className="px-3 py-3 text-sm text-gray-600 dark:text-gray-300">
+                    {new Date(event.start).toLocaleString()}
+                  </td>
+                  <td className="px-3 py-3 text-sm text-gray-600 dark:text-gray-300">
+                    {event.status || "active"}
+                  </td>
                   <td className="px-3 py-3">
                     <div className="flex flex-wrap items-center gap-2">
-                      <Link href={`/event-management/view-events/${event._id}`} className="rounded-lg border border-gray-300 px-2 py-1 text-xs text-gray-700 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-200 dark:hover:bg-gray-800">
+                      <Link
+                        href={`/event-management/view-events/${event._id}`}
+                        className="rounded-lg border border-gray-300 px-2 py-1 text-xs text-gray-700 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-200 dark:hover:bg-gray-800"
+                      >
                         View
                       </Link>
-                      <Link href={`/event-management/edit-event/${event._id}`} className="rounded-lg border border-brand-300 px-2 py-1 text-xs text-brand-600 hover:bg-brand-50 dark:border-brand-700 dark:text-brand-300 dark:hover:bg-brand-900/20">
-                        Edit
-                      </Link>
-                      <button type="button" onClick={() => setEventToDelete(event)} disabled={deletingId === event._id} className="rounded-lg border border-error-300 px-2 py-1 text-xs text-error-600 hover:bg-error-50 disabled:opacity-60 dark:border-error-700 dark:text-error-300 dark:hover:bg-error-900/20">
-                        {deletingId === event._id ? "Deleting..." : "Delete"}
-                      </button>
+
+                      {isAdmin && (
+                        <>
+                          <Link
+                            href={`/event-management/edit-event/${event._id}`}
+                            className="rounded-lg border border-brand-300 px-2 py-1 text-xs text-brand-600 hover:bg-brand-50 dark:border-brand-700 dark:text-brand-300 dark:hover:bg-brand-900/20"
+                          >
+                            Edit
+                          </Link>
+                          <button
+                            type="button"
+                            onClick={() => setEventToDelete(event)}
+                            disabled={deletingId === event._id}
+                            className="rounded-lg border border-error-300 px-2 py-1 text-xs text-error-600 hover:bg-error-50 disabled:opacity-60 dark:border-error-700 dark:text-error-300 dark:hover:bg-error-900/20"
+                          >
+                            {deletingId === event._id ? "Deleting..." : "Delete"}
+                          </button>
+                        </>
+                      )}
                     </div>
                   </td>
                 </tr>
@@ -133,7 +203,7 @@ export default function ViewEventsPage() {
         </div>
       )}
 
-      {eventToDelete && (
+      {isAdmin && eventToDelete && (
         <div className="fixed inset-0 z-[99999] flex items-center justify-center bg-black/50 p-4">
           <div className="w-full max-w-md rounded-2xl border border-gray-200 bg-white p-6 dark:border-gray-700 dark:bg-gray-900">
             <h4 className="text-base font-semibold text-gray-800 dark:text-white/90">
@@ -167,4 +237,3 @@ export default function ViewEventsPage() {
     </div>
   );
 }
-

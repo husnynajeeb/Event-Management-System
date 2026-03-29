@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { TotalUsersCard } from "@/components/dashboard/TotalUsersCard";
+import  DashboardOverview from "@/components/dashboard/DashboardOverview";
 
 export const metadata: Metadata = {
   title: "Admin Dashboard",
@@ -9,7 +9,7 @@ export const metadata: Metadata = {
 export default function Dashboard() {
   return (
     <div className="space-y-4 md:space-y-6">
-      <TotalUsersCard />
+      <DashboardOverview />
     </div>
   );
 }

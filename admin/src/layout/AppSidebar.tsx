@@ -85,7 +85,7 @@ const navItems: NavItem[] = useMemo(
             icon: <PieChartIcon />,
             name: "Reviews",
             subItems: [
-              { name: "Booked Events", path: "/reviews/booked-events" },
+              { name: "Events", path: "/reviews/booked-events" },
             ],
           },
         ]),
