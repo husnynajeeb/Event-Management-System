@@ -318,14 +318,13 @@ export async function deleteEventImage(req, res) {
   }
 }
 
-
 export async function updateEventSeats(req, res) {
   try {
     const { id } = req.params;
     const { seats } = req.body;
 
     if (!Array.isArray(seats)) {
-      return res.status(400).json({ message: "Seats array is required." });
+      return res.status(400).json({ message: "Seats Array is Required." });
     }
 
     const event = await Event.findByIdAndUpdate(
