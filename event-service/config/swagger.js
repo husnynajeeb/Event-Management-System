@@ -11,7 +11,7 @@ const options = {
     },
     servers: [
       {
-        url: "http://localhost:4000",
+         url: "https://event-service.whitebeach-5fa3a19b.centralindia.azurecontainerapps.io",
       },
     ],
     components: {
