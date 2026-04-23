@@ -20,7 +20,8 @@ import {
 const eventRouter = express.Router();
 /**
  * @swagger
- * /event/create:
+ * /events
+ * /create:
  *   post:
  *     summary: Create a new event with cover and gallery images
  *     tags: [Event]
@@ -115,7 +116,7 @@ const eventRouter = express.Router();
 // CORRECT - multipart parsing happens first
 eventRouter.post("/create", validateAdmin, uploadEventImages, createEvent); /**
  * @swagger
- * /event:
+ * /events:
  *   get:
  *     summary: Get all events
  *     tags: [Event]
@@ -154,7 +155,7 @@ eventRouter.post("/create", validateAdmin, uploadEventImages, createEvent); /**
 eventRouter.get("/", getEvents);
 /**
  * @swagger
- * /event/{id}:
+ * /events/{id}:
  *   get:
  *     summary: Get event by ID
  *     tags: [Event]
@@ -198,7 +199,7 @@ eventRouter.get("/", getEvents);
 eventRouter.get("/:id", getEventById);
 /**
  * @swagger
- * /event/{id}:
+ * /events/{id}:
  *   put:
  *     summary: Update event by ID
  *     tags: [Event]
@@ -269,7 +270,7 @@ eventRouter.get("/:id", getEventById);
 eventRouter.put("/:id", validateAdmin, updateEvent);
 /**
  * @swagger
- * /event/{id}:
+ * /events/{id}:
  *   delete:
  *     summary: Delete event by ID
  *     tags: [Event]
@@ -298,7 +299,7 @@ eventRouter.delete("/:id", validateAdmin, deleteEvent);
 
 /**
  * @swagger
- * /event/{id}/cover-image:
+ * /events/{id}/cover-image:
  *   post:
  *     summary: Upload cover image for event
  *     tags: [Event Images]
@@ -345,7 +346,7 @@ eventRouter.post(
 
 /**
  * @swagger
- * /event/{id}/gallery-images:
+ * /events/{id}/gallery-images:
  *   post:
  *     summary: Upload gallery images for event
  *     tags: [Event Images]
@@ -394,7 +395,7 @@ eventRouter.post(
 
 /**
  * @swagger
- * /event/{id}/image:
+ * /events/{id}/image:
  *   delete:
  *     summary: Delete an image from event (cover or gallery)
  *     tags: [Event Images]
