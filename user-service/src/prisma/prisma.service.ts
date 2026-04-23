@@ -1,27 +1,26 @@
 import { Injectable, OnModuleInit, OnModuleDestroy } from '@nestjs/common';
-import { PrismaPg } from "@prisma/adapter-pg"
 import { PrismaClient } from '@prisma/client';
 
 @Injectable()
 export class PrismaService
-    extends PrismaClient
-    implements OnModuleInit, OnModuleDestroy {
-    constructor() {
-        console.log('DATABASE_URL:', process.env.DATABASE_URL);
-        const connectionString = process.env.DATABASE_URL;
-        if (!connectionString) {
-            throw new Error("DATABASE_URL is not set");
-        }
-        const adapter = new PrismaPg({connectionString});
-        super({
-            adapter,
-        });
-    }
-    async onModuleInit() {
-        await this.$connect();
-    }
+  extends PrismaClient
+  implements OnModuleInit, OnModuleDestroy {
 
-    async onModuleDestroy() {
-        await this.$disconnect();
-    }
+  constructor() {
+    super({
+      datasources: {
+        db: {
+          url: process.env.DATABASE_URL,
+        },
+      },
+    });
+  }
+
+  async onModuleInit() {
+    await this.$connect();
+  }
+
+  async onModuleDestroy() {
+    await this.$disconnect();
+  }
 }
