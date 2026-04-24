@@ -12,6 +12,7 @@ type EventItem = {
   status?: "active" | "cancelled" | "completed";
   start: string;
   end: string;
+  coverImage?: string;
 };
 
 export default function ViewEventsPage() {
@@ -93,132 +94,212 @@ export default function ViewEventsPage() {
   const isAdmin = userRole === "ADMIN";
 
   return (
-    <div className="rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-white/[0.03] lg:p-6">
-      <div className="mb-4 flex items-center justify-between">
-        <h3 className="text-lg font-semibold text-gray-800 dark:text-white/90">
+    <div className="rounded-2xl border border-gray-200 bg-white p-6 dark:border-gray-800 dark:bg-white/[0.03] lg:p-8">
+      {/* Header */}
+      <div className="mb-6 flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">
+        <h3 className="text-2xl font-bold text-gray-900 dark:text-white">
           View Events
         </h3>
 
         {isAdmin && (
           <Link
             href="/event-management/create-event"
-            className="rounded-lg bg-brand-500 px-3 py-2 text-xs font-medium text-white hover:bg-brand-600"
+            className="inline-flex items-center gap-2 rounded-lg bg-brand-500 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-brand-600 dark:bg-brand-600 dark:hover:bg-brand-700"
           >
-            + Create Event
+            <span>+</span>
+            <span>Create Event</span>
           </Link>
         )}
       </div>
 
-      {loading && (
-        <p className="text-sm text-gray-500 dark:text-gray-400">
-          Loading events...
-        </p>
-      )}
-      {error && <p className="mb-3 text-sm text-error-500">{error}</p>}
-
-      {!loading && (
-        <div className="overflow-x-auto">
-          <table className="min-w-full border-collapse">
-            <thead>
-              <tr className="border-b border-gray-200 dark:border-gray-700">
-                <th className="px-3 py-2 text-left text-xs text-gray-500">
-                  Title
-                </th>
-                <th className="px-3 py-2 text-left text-xs text-gray-500">
-                  Location
-                </th>
-                <th className="px-3 py-2 text-left text-xs text-gray-500">
-                  Start
-                </th>
-                <th className="px-3 py-2 text-left text-xs text-gray-500">
-                  Status
-                </th>
-                <th className="px-3 py-2 text-left text-xs text-gray-500">
-                  Action
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              {events.length === 0 && (
-                <tr>
-                  <td
-                    className="px-3 py-6 text-center text-sm text-gray-500"
-                    colSpan={5}
-                  >
-                    No events found.
-                  </td>
-                </tr>
-              )}
-
-              {events.map((event) => (
-                <tr
-                  key={event._id}
-                  className="border-b border-gray-100 dark:border-gray-800"
-                >
-                  <td className="px-3 py-3 text-sm text-gray-800 dark:text-white/90">
-                    {event.title}
-                  </td>
-                  <td className="px-3 py-3 text-sm text-gray-600 dark:text-gray-300">
-                    {event.location || "-"}
-                  </td>
-                  <td className="px-3 py-3 text-sm text-gray-600 dark:text-gray-300">
-                    {new Date(event.start).toLocaleString()}
-                  </td>
-                  <td className="px-3 py-3 text-sm text-gray-600 dark:text-gray-300">
-                    {event.status || "active"}
-                  </td>
-                  <td className="px-3 py-3">
-                    <div className="flex flex-wrap items-center gap-2">
-                      <Link
-                        href={`/event-management/view-events/${event._id}`}
-                        className="rounded-lg border border-gray-300 px-2 py-1 text-xs text-gray-700 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-200 dark:hover:bg-gray-800"
-                      >
-                        View
-                      </Link>
-
-                      {isAdmin && (
-                        <>
-                          <Link
-                            href={`/event-management/edit-event/${event._id}`}
-                            className="rounded-lg border border-brand-300 px-2 py-1 text-xs text-brand-600 hover:bg-brand-50 dark:border-brand-700 dark:text-brand-300 dark:hover:bg-brand-900/20"
-                          >
-                            Edit
-                          </Link>
-                          <button
-                            type="button"
-                            onClick={() => setEventToDelete(event)}
-                            disabled={deletingId === event._id}
-                            className="rounded-lg border border-error-300 px-2 py-1 text-xs text-error-600 hover:bg-error-50 disabled:opacity-60 dark:border-error-700 dark:text-error-300 dark:hover:bg-error-900/20"
-                          >
-                            {deletingId === event._id ? "Deleting..." : "Delete"}
-                          </button>
-                        </>
-                      )}
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+      {/* Error Message */}
+      {error && (
+        <div className="mb-4 rounded-lg border border-error-200 bg-error-50 p-4 text-sm text-error-700 dark:border-error-800 dark:bg-error-900/20 dark:text-error-300">
+          {error}
         </div>
       )}
 
+      {/* Loading State */}
+      {loading && (
+        <div className="flex items-center justify-center py-12">
+          <p className="text-sm text-gray-500 dark:text-gray-400">
+            Loading events...
+          </p>
+        </div>
+      )}
+
+      {/* Events Table */}
+      {!loading && (
+        <div className="overflow-hidden rounded-lg border border-gray-200 dark:border-gray-700">
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead>
+                <tr className="border-b border-gray-200 bg-gray-50 dark:border-gray-700 dark:bg-gray-800/50">
+                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-600 dark:text-gray-400">
+                    Cover
+                  </th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-600 dark:text-gray-400">
+                    Title
+                  </th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-600 dark:text-gray-400">
+                    Location
+                  </th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-600 dark:text-gray-400">
+                    Start Date
+                  </th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-600 dark:text-gray-400">
+                    Status
+                  </th>
+                  <th className="px-4 py-3 text-center text-xs font-semibold uppercase tracking-wide text-gray-600 dark:text-gray-400">
+                    Actions
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
+                {events.length === 0 && (
+                  <tr>
+                    <td
+                      className="px-4 py-8 text-center text-sm text-gray-500 dark:text-gray-400"
+                      colSpan={6}
+                    >
+                      No events found.
+                    </td>
+                  </tr>
+                )}
+
+                {events.map((event) => (
+                  <tr
+                    key={event._id}
+                    className="hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors"
+                  >
+                    {/* Cover Image Column */}
+                    <td className="px-4 py-4">
+                      <div className="h-16 w-16 flex-shrink-0 overflow-hidden rounded-lg border border-gray-200 bg-gray-100 dark:border-gray-700 dark:bg-gray-800">
+                        {event.coverImage ? (
+                          <img
+                            src={event.coverImage}
+                            alt={event.title}
+                            className="h-full w-full object-cover"
+                          />
+                        ) : (
+                          <div className="flex h-full w-full items-center justify-center">
+                            <svg
+                              className="h-8 w-8 text-gray-400"
+                              fill="none"
+                              stroke="currentColor"
+                              viewBox="0 0 24 24"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={1.5}
+                                d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
+                              />
+                            </svg>
+                          </div>
+                        )}
+                      </div>
+                    </td>
+
+                    {/* Title Column */}
+                    <td className="px-4 py-4 text-sm font-medium text-gray-900 dark:text-white">
+                      {event.title}
+                    </td>
+
+                    {/* Location Column */}
+                    <td className="px-4 py-4 text-sm text-gray-600 dark:text-gray-300">
+                      {event.location || "-"}
+                    </td>
+
+                    {/* Start Date Column */}
+                    <td className="px-4 py-4 text-sm text-gray-600 dark:text-gray-300">
+                      {new Date(event.start).toLocaleString()}
+                    </td>
+
+                    {/* Status Column */}
+                    <td className="px-4 py-4 text-sm">
+                      <span
+                        className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold ${
+                          event.status === "active"
+                            ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400"
+                            : event.status === "completed"
+                              ? "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400"
+                              : event.status === "cancelled"
+                                ? "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400"
+                                : "bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300"
+                        }`}
+                      >
+                        {event.status || "active"}
+                      </span>
+                    </td>
+
+                    {/* Actions Column */}
+                    <td className="px-4 py-4">
+                      <div className="flex items-center justify-center gap-2">
+                        <Link
+                          href={`/event-management/view-events/${event._id}`}
+                          className="inline-flex items-center gap-1 rounded-lg border border-gray-300 px-3 py-1.5 text-xs font-medium text-gray-700 transition-colors hover:bg-gray-100 dark:border-gray-600 dark:text-gray-200 dark:hover:bg-gray-700"
+                        >
+                          View
+                        </Link>
+
+                        {isAdmin && (
+                          <>
+                            <Link
+                              href={`/event-management/edit-event/${event._id}`}
+                              className="inline-flex items-center gap-1 rounded-lg border border-brand-300 px-3 py-1.5 text-xs font-medium text-brand-600 transition-colors hover:bg-brand-50 dark:border-brand-700 dark:text-brand-300 dark:hover:bg-brand-900/30"
+                            >
+                              Edit
+                            </Link>
+                            <button
+                              type="button"
+                              onClick={() => setEventToDelete(event)}
+                              disabled={deletingId === event._id}
+                              className="inline-flex items-center gap-1 rounded-lg border border-error-300 px-3 py-1.5 text-xs font-medium text-error-600 transition-colors hover:bg-error-50 disabled:opacity-60 dark:border-error-700 dark:text-error-300 dark:hover:bg-error-900/30"
+                            >
+                              {deletingId === event._id ? "Deleting..." : "Delete"}
+                            </button>
+                          </>
+                        )}
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Confirmation Modal */}
       {isAdmin && eventToDelete && (
-        <div className="fixed inset-0 z-[99999] flex items-center justify-center bg-black/50 p-4">
-          <div className="w-full max-w-md rounded-2xl border border-gray-200 bg-white p-6 dark:border-gray-700 dark:bg-gray-900">
-            <h4 className="text-base font-semibold text-gray-800 dark:text-white/90">
-              Delete Event
-            </h4>
-            <p className="mt-2 text-sm text-gray-600 dark:text-gray-300">
-              Are you sure you want to delete{" "}
-              <span className="font-medium">{eventToDelete.title}</span>?
-            </p>
-            <div className="mt-5 flex items-center justify-end gap-2">
+        <div className="fixed inset-0 z-[99999] flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm">
+          <div className="w-full max-w-md animate-in fade-in zoom-in-95 rounded-2xl border border-gray-200 bg-white p-6 shadow-2xl dark:border-gray-700 dark:bg-gray-900">
+            {/* Modal Header */}
+            <div className="mb-4">
+              <h4 className="text-lg font-bold text-gray-900 dark:text-white">
+                Delete Event
+              </h4>
+            </div>
+
+            {/* Modal Body */}
+            <div className="mb-6">
+              <p className="text-sm text-gray-600 dark:text-gray-300">
+                Are you sure you want to delete{" "}
+                <span className="font-semibold text-gray-900 dark:text-white">
+                  "{eventToDelete.title}"
+                </span>
+                ? This action cannot be undone.
+              </p>
+            </div>
+
+            {/* Modal Footer */}
+            <div className="flex items-center justify-end gap-3">
               <button
                 type="button"
                 onClick={() => setEventToDelete(null)}
                 disabled={deletingId === eventToDelete._id}
-                className="rounded-lg border border-gray-300 px-3 py-1.5 text-xs hover:bg-gray-50 disabled:opacity-60 dark:border-gray-700 dark:hover:bg-gray-800"
+                className="rounded-lg border border-gray-300 px-4 py-2.5 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-100 disabled:opacity-60 dark:border-gray-600 dark:text-gray-200 dark:hover:bg-gray-800"
               >
                 Cancel
               </button>
@@ -226,9 +307,9 @@ export default function ViewEventsPage() {
                 type="button"
                 onClick={() => handleDelete(eventToDelete._id)}
                 disabled={deletingId === eventToDelete._id}
-                className="rounded-lg border border-error-300 bg-error-50 px-3 py-1.5 text-xs text-error-700 hover:bg-error-100 disabled:opacity-60 dark:border-error-700 dark:bg-error-900/20 dark:text-error-300 dark:hover:bg-error-900/40"
+                className="rounded-lg bg-error-600 px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-error-700 disabled:opacity-60 dark:bg-error-700 dark:hover:bg-error-800"
               >
-                {deletingId === eventToDelete._id ? "Deleting..." : "Yes, Delete"}
+                {deletingId === eventToDelete._id ? "Deleting..." : "Delete Event"}
               </button>
             </div>
           </div>
