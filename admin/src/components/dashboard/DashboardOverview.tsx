@@ -129,7 +129,7 @@ export default function DashboardOverview() {
             return;
           }
 
-          setTotalUsers(typeof usersData.total === "number" ? usersData.total : 0);
+          setTotalUsers(usersData.meta?.total ?? 0);
           setTotalBookings(Array.isArray(bookingsData) ? bookingsData.length : 0);
         } else {
           const bookingsRes = await fetch(`${bookingUrl}/bookings`, {
