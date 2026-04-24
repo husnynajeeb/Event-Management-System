@@ -34,70 +34,70 @@ const AppSidebar: React.FC = () => {
     setUserRole(role);
   }, []);
 
-const navItems: NavItem[] = useMemo(
-  () => [
-    {
-      icon: <GridIcon />,
-      name: "Dashboard",
-      path: "/",
-    },
+  const navItems: NavItem[] = useMemo(
+    () => [
+      {
+        icon: <GridIcon />,
+        name: "Dashboard",
+        path: "/",
+      },
 
-    ...(userRole === "ADMIN"
-      ? [
-          {
-            icon: <CalenderIcon />,
-            name: "Event Management",
-            subItems: [
-              { name: "Create Event", path: "/event-management/create-event" },
-              { name: "View Events", path: "/event-management/view-events" },
-            ],
-          },
-          {
-            icon: <ListIcon />,
-            name: "Booking Management",
-            subItems: [
-              { name: "View All Bookings", path: "/booking-management/all-bookings" },
-            ],
-          },
-          {
-            icon: <UserCircleIcon />,
-            name: "Users",
-            path: "/app-users",
-          },
-        ]
-      : [
-          {
-            icon: <CalenderIcon />,
-            name: "Event Management",
-            subItems: [
-              { name: "View Events", path: "/event-management/view-events" },
-            ],
-          },
-          {
-            icon: <ListIcon />,
-            name: "Booking Management",
-            subItems: [
-              { name: "Book an Event", path: "/booking-management/book-event" },
-              { name: "My Bookings", path: "/booking-management/my-bookings" },
-            ],
-          },
-          {
-            icon: <PieChartIcon />,
-            name: "Reviews",
-            subItems: [
-              { name: "Events", path: "/reviews/booked-events" },
-            ],
-          },
-        ]),
+      ...(userRole === "ADMIN"
+        ? [
+            {
+              icon: <CalenderIcon />,
+              name: "Event Management",
+              subItems: [
+                { name: "Create Event", path: "/event-management/create-event" },
+                { name: "View Events", path: "/event-management/view-events" },
+              ],
+            },
+            {
+              icon: <ListIcon />,
+              name: "Booking Management",
+              subItems: [
+                { name: "View All Bookings", path: "/booking-management/all-bookings" },
+              ],
+            },
+            {
+              icon: <UserCircleIcon />,
+              name: "Users",
+              path: "/app-users",
+            },
+          ]
+        : [
+            {
+              icon: <CalenderIcon />,
+              name: "Events",
+              subItems: [
+                { name: "View Events", path: "/event-management/view-events" },
+              ],
+            },
+            {
+              icon: <ListIcon />,
+              name: "My Bookings",
+              subItems: [
+                { name: "Book an Event", path: "/booking-management/book-event" },
+                { name: "My Bookings", path: "/booking-management/my-bookings" },
+              ],
+            },
+            {
+              icon: <PieChartIcon />,
+              name: "Reviews",
+              subItems: [
+                { name: "Events", path: "/reviews/booked-events" },
+              ],
+            },
+          ]),
 
-    {
-      icon: <UserCircleIcon />,
-      name: "Profile",
-      path: "/profile",
-    },
-  ],
-  [userRole],
-);
+      {
+        icon: <UserCircleIcon />,
+        name: "Profile",
+        path: "/profile",
+      },
+    ],
+    [userRole],
+  );
 
   const [openSubmenu, setOpenSubmenu] = useState<{
     type: "main" | "others";
@@ -249,30 +249,6 @@ const navItems: NavItem[] = useMemo(
                       }`}
                     >
                       {subItem.name}
-                      <span className="flex items-center gap-1 ml-auto">
-                        {subItem.new && (
-                          <span
-                            className={`ml-auto ${
-                              isActive(subItem.path)
-                                ? "menu-dropdown-badge-active"
-                                : "menu-dropdown-badge-inactive"
-                            } menu-dropdown-badge`}
-                          >
-                            new
-                          </span>
-                        )}
-                        {subItem.pro && (
-                          <span
-                            className={`ml-auto ${
-                              isActive(subItem.path)
-                                ? "menu-dropdown-badge-active"
-                                : "menu-dropdown-badge-inactive"
-                            } menu-dropdown-badge`}
-                          >
-                            pro
-                          </span>
-                        )}
-                      </span>
                     </Link>
                   </li>
                 ))}
@@ -313,31 +289,10 @@ const navItems: NavItem[] = useMemo(
 
       <div className="flex flex-col overflow-y-auto duration-300 ease-linear no-scrollbar">
         <nav className="mb-6">
-          <div className="flex flex-col gap-4">
-            <div>
-              <h2
-                className={`mb-4 text-xs uppercase flex leading-[20px] text-gray-400 ${
-                  !isExpanded && !isHovered ? "lg:justify-center" : "justify-start"
-                }`}
-              >
-                {isExpanded || isHovered || isMobileOpen ? "Menu" : <HorizontaLDots />}
-              </h2>
-              {renderMenuItems(navItems, "main")}
-            </div>
-
-            {othersItems.length > 0 && (
-              <div>
-                <h2
-                  className={`mb-4 text-xs uppercase flex leading-[20px] text-gray-400 ${
-                    !isExpanded && !isHovered ? "lg:justify-center" : "justify-start"
-                  }`}
-                >
-                  {isExpanded || isHovered || isMobileOpen ? "Others" : <HorizontaLDots />}
-                </h2>
-                {renderMenuItems(othersItems, "others")}
-              </div>
-            )}
-          </div>
+          <h2 className="mb-4 text-xs uppercase text-gray-400">
+            Menu
+          </h2>
+          {renderMenuItems(navItems, "main")}
         </nav>
       </div>
     </aside>
