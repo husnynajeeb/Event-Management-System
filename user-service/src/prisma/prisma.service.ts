@@ -1,5 +1,4 @@
 import { Injectable, OnModuleInit, OnModuleDestroy } from '@nestjs/common';
-import { PrismaPg } from "@prisma/adapter-pg"
 import { PrismaClient } from '@prisma/client';
 
 @Injectable()
@@ -20,7 +19,7 @@ export class PrismaService
         await this.$connect();
     }
 
-    async onModuleDestroy() {
-        await this.$disconnect();
-    }
+  async onModuleDestroy() {
+    await this.$disconnect();
+  }
 }
