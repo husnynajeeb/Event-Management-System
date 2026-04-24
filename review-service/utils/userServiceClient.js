@@ -1,7 +1,7 @@
 const axios = require("axios");
 
 // Get the user service API URL from environment variables or default to localhost
-const USER_SERVICE_URL = process.env.USER_SERVICE_URL || "http://user-service:4003";
+const USER_SERVICE_URL = process.env.USER_URL || "http://user-service:4003";
 
 /**
  * Validate the user token with the User Service
