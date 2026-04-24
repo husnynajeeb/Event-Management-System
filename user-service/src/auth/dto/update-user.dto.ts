@@ -1,11 +1,7 @@
 import { ApiProperty } from "@nestjs/swagger";
-import { IsEmail, IsOptional, IsString, MinLength } from "class-validator";
+import { IsOptional, IsString } from "class-validator";
 
-export class RegisterDto {
-  @ApiProperty({ description: "The email of the user" })
-  @IsEmail()
-  email: string;
-
+export class UpdateUserDto {
   @ApiProperty({ description: "The first name of the user" })
   @IsString()
   @IsOptional()
@@ -26,12 +22,7 @@ export class RegisterDto {
   @IsOptional()
   address?: string;
 
-  // ✅ imageUrl removed from RegisterDto entirely.
-  // Clients must not set this directly — it is always assigned
-  // by the backend after a Cloudinary upload via PATCH /users/me/avatar.
-
-  @ApiProperty({ description: "The password of the user" })
-  @IsString()
-  @MinLength(8)
-  password: string;
+  // ✅ imageUrl intentionally excluded.
+  // Clients cannot set a raw image URL — use PATCH /users/me/avatar
+  // which validates, uploads to Cloudinary, and sets the URL server-side.
 }

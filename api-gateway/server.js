@@ -10,7 +10,11 @@ import gatewayRoutes from "./routes/api.route.js";
 console.log("EVENT_URL:", process.env.EVENT_URL);
 
 const app = express();
-app.use(helmet()); // Security headers
+app.use(
+  helmet({
+    contentSecurityPolicy: false,
+  })
+);
 app.use(cors());
 app.use(express.json());
 

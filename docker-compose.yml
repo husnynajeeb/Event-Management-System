@@ -10,7 +10,7 @@ services:
     env_file:
       - ./user-service/.env
     environment:
-      DATABASE_URL: "postgresql://postgres:postgres123@host.docker.internal:5432/userdb"
+      DATABASE_URL: "postgresql://postgres.wvtthzqshdcqlezqmfpe:ERt9ncvPUtuf989t@aws-1-ap-northeast-2.pooler.supabase.com:6543/postgres?pgbouncer=true&connection_limit=1"
 
   review-service:
     build: ./review-service

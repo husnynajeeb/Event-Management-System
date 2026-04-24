@@ -1,105 +1,166 @@
-import { BadRequestException, Injectable, NotFoundException } from "@nestjs/common";
-import { Role, User } from "@prisma/client";
-import { PrismaService } from "src/prisma/prisma.service";
-import { sanitizeUser } from "./user.utils";
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from "@nestjs/common";
+import { PrismaService } from "../prisma/prisma.service";
+import { CloudinaryService } from "../cloudinary/cloudinary.service";
 import { UpdateUserDto } from "./dto/update-user.dto";
-import { CloudinaryService } from "src/cloudinary/cloudinary.service";
+import { sanitizeUser } from "./user.utils";
 
 @Injectable()
 export class UsersService {
-    constructor(private readonly prisma: PrismaService, private readonly cloudinaryService: CloudinaryService) { }
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly cloudinary: CloudinaryService,
+  ) {}
 
-    async getAllUsers(page: number, limit: number) {
-        const skip = (page - 1) * limit
-        const [items, total] = await this.prisma.$transaction([
-            this.prisma.user.findMany({
-                skip,
-                take: limit
-            }),
-            this.prisma.user.count()
-        ])
-        return { items: items.map(sanitizeUser), total, page, limit }
+  // ─── Admin ───────────────────────────────────────────────────────────────
+
+  async getAllUsers(page: number, limit: number) {
+    const skip = (page - 1) * limit;
+
+    const [users, total] = await this.prisma.$transaction([
+      this.prisma.user.findMany({
+        skip,
+        take: limit,
+        orderBy: { createdAt: "desc" }, // ✅ deterministic pagination
+      }),
+      this.prisma.user.count(),
+    ]);
+
+    return {
+      data: users.map(sanitizeUser),
+      meta: {
+        total,
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit),
+      },
+    };
+  }
+
+  async deactivateUser(id: string) {
+    const user = await this.prisma.user.findUnique({ where: { id } });
+    if (!user) throw new NotFoundException("User not found");
+
+    await this.prisma.user.update({
+      where: { id },
+      data: { isActive: false },
+    });
+
+    return { message: "User deactivated successfully" };
+  }
+
+  async activateUser(id: string) {
+    const user = await this.prisma.user.findUnique({ where: { id } });
+    if (!user) throw new NotFoundException("User not found");
+
+    await this.prisma.user.update({
+      where: { id },
+      data: { isActive: true },
+    });
+
+    return { message: "User activated successfully" };
+  }
+
+  // ─── Profile ─────────────────────────────────────────────────────────────
+
+  async getProfile(user: any) {
+    const found = await this.prisma.user.findUnique({
+      where: { id: user.id },
+    });
+    if (!found) throw new NotFoundException("User not found");
+    return sanitizeUser(found);
+  }
+
+  async updateProfile(user: any, data: UpdateUserDto) {
+    const updated = await this.prisma.user.update({
+      where: { id: user.id },
+      data,
+    });
+    return sanitizeUser(updated);
+  }
+
+  // ─── Avatar ───────────────────────────────────────────────────────────────
+
+  /**
+   * Upload a new avatar to Cloudinary and save the URL to the user record.
+   * If the user already has an avatar, the old Cloudinary image is deleted first.
+   */
+  async updateAvatar(user: any, file: Express.Multer.File) {
+    if (!file) {
+      throw new BadRequestException("No image file provided");
     }
 
-    async deactivateUser(id: string) {
-        const user = await this.prisma.user.findUnique({
-            where: { id }
-        })
-        if (!user) {
-            throw new NotFoundException("User not found")
-        }
-        if (!user.isActive) {
-            throw new BadRequestException("User is already deactivated")
-        }
-        if (user.role === Role.ADMIN) {
-            throw new BadRequestException("Admin cannot be deactivated")
-        }
-        await this.prisma.user.update({
-            where: { id },
-            data: { isActive: false }
-        })
-        return { message: "User deactivated successfully" }
-
+    // Validate file type
+    const allowed = ["image/jpeg", "image/png", "image/webp", "image/gif"];
+    if (!allowed.includes(file.mimetype)) {
+      throw new BadRequestException(
+        "Invalid file type. Only JPEG, PNG, WEBP and GIF are allowed.",
+      );
     }
 
-    async activateUser(id: string) {
-        const user = await this.prisma.user.findUnique({
-            where: { id }
-        })
-        if (!user) {
-            throw new NotFoundException("User not found")
-        }
-        if (user.isActive) {
-            throw new BadRequestException("User is already activated")
-        }
-        if (user.role === Role.ADMIN) {
-            throw new BadRequestException("Admin cannot be activated")
-        }
-        await this.prisma.user.update({
-            where: { id },
-            data: { isActive: true }
-        })
-        return { message: "User activated successfully" }
+    // Validate file size — 5MB max
+    if (file.size > 5 * 1024 * 1024) {
+      throw new BadRequestException("File too large. Maximum size is 5MB.");
     }
 
-    async getProfile(user: User) {
-        return sanitizeUser(user)
+    const existing = await this.prisma.user.findUnique({
+      where: { id: user.id },
+    });
+
+    // ✅ Delete old Cloudinary image before uploading the new one
+    if (existing?.imageUrl) {
+      const publicId = this.cloudinary.extractPublicId(existing.imageUrl);
+      if (publicId) {
+        await this.cloudinary.deleteImage(publicId);
+      }
     }
 
-    async updateProfile(user: User, data: UpdateUserDto) {
+    // Upload new image to Cloudinary
+    const result = await this.cloudinary.uploadImage(file, "user-profile");
 
-        const existingUser = await this.prisma.user.findUnique({
-            where: { id: user.id }
-        })
-        if (!existingUser) {
-            throw new NotFoundException("User not found")
-        }
-        const updatedUser = await this.prisma.user.update({
-            where: { id: user.id },
-            data: data
-        })
-        return { message: "User updated successfully", user: sanitizeUser(updatedUser) }
+    // Save the Cloudinary secure URL to the DB
+    const updated = await this.prisma.user.update({
+      where: { id: user.id },
+      data: { imageUrl: result.secure_url },
+    });
+
+    return {
+      message: "Avatar updated successfully",
+      imageUrl: updated.imageUrl,
+      user: sanitizeUser(updated),
+    };
+  }
+
+  /**
+   * Remove the user's avatar from Cloudinary and clear the DB field.
+   */
+  async deleteAvatar(user: any) {
+    const existing = await this.prisma.user.findUnique({
+      where: { id: user.id },
+    });
+
+    if (!existing?.imageUrl) {
+      throw new BadRequestException("No avatar to delete");
     }
 
-    async updateAvatar(user: User, file: Express.Multer.File) {
-        const cloudinaryResponse = await this.cloudinaryService.uploadImage(file)
-        const updatedUser = await this.prisma.user.update({
-            where: { id: user.id },
-            data: { imageUrl: cloudinaryResponse.secure_url }
-        })
-        return { message: "Avatar updated successfully", user: sanitizeUser(updatedUser) }
+    // Delete from Cloudinary
+    const publicId = this.cloudinary.extractPublicId(existing.imageUrl);
+    if (publicId) {
+      await this.cloudinary.deleteImage(publicId);
     }
 
-    async deleteAvatar(user: User) {
-        const updatedUser = await this.prisma.user.update({
-            where: { id: user.id },
-            data: { imageUrl: null }
-        })
-        return { message: "Avatar deleted successfully", user: sanitizeUser(updatedUser) }
-    }
+    // Clear the DB field
+    const updated = await this.prisma.user.update({
+      where: { id: user.id },
+      data: { imageUrl: null },
+    });
 
-    // private sanitizeUser(user: User) {
-    //     const { password, ...rest } = user
-    //     return rest
-    // }
+    return {
+      message: "Avatar deleted successfully",
+      user: sanitizeUser(updated),
+    };
+  }
 }

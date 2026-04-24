@@ -189,20 +189,29 @@ export async function proxyToService(req, res, targetBaseUrl, stripPrefix) {
       return;
     }
 
-    const axiosConfig = {
-      method: req.method,
-      url: targetUrl, // ⚠️ query string already included via originalUrl — do NOT add params: req.query
-      headers: sanitizeHeaders(req.headers), // RFC-compliant — replaces manual deletes
-      timeout: 30000,
-      validateStatus: () => true, // Forward ALL status codes (4xx, 5xx) as-is
-    };
+   const axiosConfig = {
+  method: req.method,
+  url: targetUrl,
+  headers: sanitizeHeaders(req.headers),
+  timeout: 30000,
+  validateStatus: () => true,
+  maxRedirects: 0, // ✅ ADD THIS — don't follow redirects, pass them to browser
+};
 
-    // Attach body only for methods that support one (RFC 7231 §4.3)
-    if (METHODS_WITH_BODY.has(req.method.toUpperCase())) {
-      axiosConfig.data = req.body;
-    }
+if (METHODS_WITH_BODY.has(req.method.toUpperCase())) {
+  axiosConfig.data = req.body;
+}
 
-    const response = await axios(axiosConfig);
+const response = await axios(axiosConfig);
+
+// ✅ ADD THIS BLOCK — forward 301/302/307/308 straight to the browser
+if ([301, 302, 307, 308].includes(response.status)) {
+  const location = response.headers["location"];
+  if (location) {
+    console.log(`[Gateway] ↪ Redirecting browser to ${location}`);
+    return res.redirect(response.status, location);
+  }
+}
 
     // ✅ Log the upstream response status
     console.log(`[Gateway] ← ${response.status} from ${targetUrl}`);
