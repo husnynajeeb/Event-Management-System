@@ -20,14 +20,19 @@ type AppUser = {
   role?: string;
   isActive?: boolean;
   createdAt?: string;
-  avatarUrl?: string | null;
+  imageUrl?: string | null;
 };
 
-type UsersResponse = {
-  items: AppUser[];
+type UsersMeta = {
   total: number;
   page: number;
   limit: number;
+  totalPages: number;
+};
+
+type UsersResponse = {
+  data: AppUser[];
+  meta: UsersMeta;
 };
 
 function TableSkeleton({ rows = 5 }: { rows?: number }) {
@@ -87,13 +92,15 @@ export default function AppUsersPage() {
   const [users, setUsers] = useState<AppUser[]>([]);
   const [page, setPage] = useState(1);
   const [limit] = useState(10);
-  const [total, setTotal] = useState(0);
+  const [totalPages, setTotalPages] = useState(1);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [mutatingId, setMutatingId] = useState<string | null>(null);
 
   useEffect(() => {
     async function fetchUsers() {
+      setLoading(true);
+      setError(null);
       try {
         const token = getAuthTokenFromCookie();
         if (!token) {
@@ -102,27 +109,25 @@ export default function AppUsersPage() {
           return;
         }
         const baseUrl = getUserServiceUrl();
-        const res = await fetch(
-          `${baseUrl}/users?page=${page}&limit=${limit}`,
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
+        const res = await fetch(`${baseUrl}/users?page=${page}&limit=${limit}`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
           },
-        );
-        const data = (await res.json().catch(() => ({}))) as Partial<UsersResponse>;
+        });
+
+        const json = await res.json().catch(() => ({})) as Partial<UsersResponse> & { message?: string };
+
         if (!res.ok) {
-          setError(
-            (data as { message?: string })?.message || "Unable to load users. Admin only route.",
-          );
+          setError(json.message || "Unable to load users. Admin only route.");
           setLoading(false);
           return;
         }
-        setUsers(data.items || []);
-        setTotal(data.total || 0);
-        setLoading(false);
+
+        setUsers(json.data || []);
+        setTotalPages(json.meta?.totalPages ?? 1);
       } catch {
         setError("Something went wrong while loading users.");
+      } finally {
         setLoading(false);
       }
     }
@@ -151,10 +156,7 @@ export default function AppUsersPage() {
 
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
-        const message =
-          (data as { message?: string })?.message ||
-          "Unable to update user status.";
-        setError(message);
+        setError((data as { message?: string })?.message || "Unable to update user status.");
         return;
       }
 
@@ -167,8 +169,6 @@ export default function AppUsersPage() {
       setMutatingId(null);
     }
   }
-
-  const totalPages = total && limit ? Math.ceil(total / limit) : 1;
 
   return (
     <div>
@@ -192,12 +192,12 @@ export default function AppUsersPage() {
             />
             <div className="flex items-center justify-between mt-4 text-sm text-gray-600 dark:text-gray-400">
               <span>
-                Page {page} of {totalPages || 1}
+                Page {page} of {totalPages}
               </span>
               <div className="flex items-center gap-2">
                 <button
                   type="button"
-                  className="px-3 py-1 rounded-lg border border-gray-200 text-xs hover:bg-gray-50 dark:border-gray-700 dark:hover:bg-gray-800"
+                  className="px-3 py-1 rounded-lg border border-gray-200 text-xs hover:bg-gray-50 dark:border-gray-700 dark:hover:bg-gray-800 disabled:opacity-40 disabled:cursor-not-allowed"
                   disabled={page <= 1}
                   onClick={() => setPage((p) => Math.max(1, p - 1))}
                 >
@@ -205,11 +205,9 @@ export default function AppUsersPage() {
                 </button>
                 <button
                   type="button"
-                  className="px-3 py-1 rounded-lg border border-gray-200 text-xs hover:bg-gray-50 dark:border-gray-700 dark:hover:bg-gray-800"
+                  className="px-3 py-1 rounded-lg border border-gray-200 text-xs hover:bg-gray-50 dark:border-gray-700 dark:hover:bg-gray-800 disabled:opacity-40 disabled:cursor-not-allowed"
                   disabled={page >= totalPages}
-                  onClick={() =>
-                    setPage((p) => (totalPages ? Math.min(totalPages, p + 1) : p))
-                  }
+                  onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
                 >
                   Next
                 </button>
@@ -231,6 +229,8 @@ function AppUsersTable({
   onToggleActive: (user: AppUser) => void;
   mutatingId: string | null;
 }) {
+  const headers = ["User", "Email", "Status", "Created", "Action"];
+
   if (users.length === 0) {
     return (
       <div className="overflow-hidden rounded-xl border border-gray-200 bg-white dark:border-white/[0.05] dark:bg-white/[0.03]">
@@ -238,11 +238,11 @@ function AppUsersTable({
           <Table>
             <TableHeader className="border-b border-gray-100 dark:border-white/[0.05]">
               <TableRow>
-                <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">User</TableCell>
-                <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">Email</TableCell>
-                <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">Status</TableCell>
-                <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">Created</TableCell>
-                <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">Action</TableCell>
+                {headers.map((h) => (
+                  <TableCell key={h} isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">
+                    {h}
+                  </TableCell>
+                ))}
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -259,6 +259,7 @@ function AppUsersTable({
       </div>
     );
   }
+
   return (
     <div className="overflow-hidden rounded-xl border border-gray-200 bg-white dark:border-white/[0.05] dark:bg-white/[0.03]">
       <div className="max-w-full overflow-x-auto">
@@ -266,29 +267,31 @@ function AppUsersTable({
           <Table>
             <TableHeader className="border-b border-gray-100 dark:border-white/[0.05]">
               <TableRow>
-                <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">User</TableCell>
-                <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">Email</TableCell>
-                <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">Status</TableCell>
-                <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">Created</TableCell>
-                <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">Action</TableCell>
+                {headers.map((h) => (
+                  <TableCell key={h} isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">
+                    {h}
+                  </TableCell>
+                ))}
               </TableRow>
             </TableHeader>
             <TableBody className="divide-y divide-gray-100 dark:divide-white/[0.05]">
               {users.map((user) => {
                 const fullName =
-                  (user.firstName || user.lastName
+                  user.firstName || user.lastName
                     ? `${user.firstName ?? ""} ${user.lastName ?? ""}`.trim()
-                    : null) || "N/A";
-                const initials = fullName !== "N/A"
-                  ? (user.firstName?.[0] ?? "") + (user.lastName?.[0] ?? "")
-                  : user.email.slice(0, 2).toUpperCase();
+                    : "N/A";
+                const initials =
+                  fullName !== "N/A"
+                    ? (user.firstName?.[0] ?? "") + (user.lastName?.[0] ?? "")
+                    : user.email.slice(0, 2).toUpperCase();
+
                 return (
                   <TableRow key={user.id}>
                     <TableCell className="px-5 py-4 sm:px-6 text-start">
                       <div className="flex items-center gap-3">
                         <div className="w-10 h-10 overflow-hidden rounded-full bg-gray-100 dark:bg-white/10 flex items-center justify-center">
-                          {user.avatarUrl ? (
-                            <Image width={40} height={40} src={user.avatarUrl} alt={fullName} />
+                          {user.imageUrl ? (
+                            <Image width={40} height={40} src={user.imageUrl} alt={fullName} className="object-cover" />
                           ) : (
                             <span className="text-theme-sm font-medium text-gray-600 dark:text-gray-400">
                               {initials}
@@ -309,10 +312,7 @@ function AppUsersTable({
                       {user.email}
                     </TableCell>
                     <TableCell className="px-4 py-3 text-start">
-                      <Badge
-                        size="sm"
-                        color={user.isActive ? "success" : "error"}
-                      >
+                      <Badge size="sm" color={user.isActive ? "success" : "error"}>
                         {user.isActive ? "Active" : "Inactive"}
                       </Badge>
                     </TableCell>
@@ -321,20 +321,28 @@ function AppUsersTable({
                         ? new Date(user.createdAt).toLocaleDateString()
                         : "—"}
                     </TableCell>
-                    <TableCell className="px-4 py-3 text-start">
-                      <button
-                        type="button"
-                        onClick={() => onToggleActive(user)}
-                        disabled={mutatingId === user.id}
-                        className={`px-3 py-1 rounded-lg border text-xs font-medium transition-colors ${
-                          user.isActive
-                            ? "border-error-200 text-error-600 hover:bg-error-50 dark:border-error-500/40 dark:text-error-300 dark:hover:bg-error-500/10"
-                            : "border-success-200 text-success-600 hover:bg-success-50 dark:border-success-500/40 dark:text-success-300 dark:hover:bg-success-500/10"
-                        } ${mutatingId === user.id ? "opacity-60 cursor-not-allowed" : ""}`}
-                      >
-                        {user.isActive ? "Deactivate" : "Activate"}
-                      </button>
-                    </TableCell>
+                   <TableCell className="px-4 py-3 text-start">
+  {user.role?.toLowerCase() === "admin" ? (
+    <span className="text-xs text-gray-400 dark:text-gray-600">Can&apos;t be deactivated</span>
+  ) : (
+    <button
+      type="button"
+      onClick={() => onToggleActive(user)}
+      disabled={mutatingId === user.id}
+      className={`px-3 py-1 rounded-lg border text-xs font-medium transition-colors ${
+        user.isActive
+          ? "border-error-200 text-error-600 hover:bg-error-50 dark:border-error-500/40 dark:text-error-300 dark:hover:bg-error-500/10"
+          : "border-success-200 text-success-600 hover:bg-success-50 dark:border-success-500/40 dark:text-success-300 dark:hover:bg-success-500/10"
+      } ${mutatingId === user.id ? "opacity-60 cursor-not-allowed" : ""}`}
+    >
+      {mutatingId === user.id
+        ? "Updating…"
+        : user.isActive
+        ? "Deactivate"
+        : "Activate"}
+    </button>
+  )}
+</TableCell>
                   </TableRow>
                 );
               })}
@@ -345,4 +353,3 @@ function AppUsersTable({
     </div>
   );
 }
-
