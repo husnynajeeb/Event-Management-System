@@ -108,6 +108,17 @@ export default function CreateEventPage() {
     }
   }
 
+  const handleAddGalleryImage = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newFiles = Array.from(e.target.files || []);
+    setGalleryImageFiles((prev) => [...prev, ...newFiles]);
+    // Reset input
+    e.target.value = "";
+  };
+
+  const handleRemoveGalleryImage = (index: number) => {
+    setGalleryImageFiles((prev) => prev.filter((_, i) => i !== index));
+  };
+
   return (
     <div className="rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-white/[0.03] lg:p-6">
       <h3 className="mb-4 text-lg font-semibold text-gray-800 dark:text-white/90">
@@ -161,25 +172,56 @@ export default function CreateEventPage() {
             </p>
           )}
         </div>
-        <div>
+        <div className="md:col-span-2">
           <label className="mb-1 block text-xs text-gray-500">Gallery Images</label>
           <input 
             type="file" 
             accept="image/*"
             multiple
-            onChange={(e) => setGalleryImageFiles(Array.from(e.target.files || []))}
+            onChange={handleAddGalleryImage}
             className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-800 file:mr-3 file:rounded file:border-0 file:bg-brand-50 file:px-3 file:py-1 file:text-xs file:font-medium file:text-brand-700 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-200 dark:file:bg-brand-900/20 dark:file:text-brand-300" 
           />
           {galleryImageFiles.length > 0 && (
-            <div className="mt-2 space-y-1">
-              <p className="text-xs font-medium text-gray-600 dark:text-gray-400">
-                Selected files ({galleryImageFiles.length}):
+            <div className="mt-3 space-y-2">
+              <p className="text-xs font-semibold text-gray-700 dark:text-gray-300">
+                Selected Images ({galleryImageFiles.length}):
               </p>
-              <ul className="text-xs text-gray-600 dark:text-gray-400">
+              <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4">
                 {galleryImageFiles.map((file, idx) => (
-                  <li key={idx}>• {file.name}</li>
+                  <div
+                    key={idx}
+                    className="group relative overflow-hidden rounded-lg border border-gray-200 bg-gray-100 dark:border-gray-700 dark:bg-gray-800"
+                  >
+                    <img
+                      src={URL.createObjectURL(file)}
+                      alt={`Gallery ${idx + 1}`}
+                      className="h-24 w-full object-cover"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => handleRemoveGalleryImage(idx)}
+                      className="absolute inset-0 flex items-center justify-center bg-black/60 opacity-0 transition-opacity group-hover:opacity-100"
+                    >
+                      <svg
+                        className="h-6 w-6 text-white"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M6 18L18 6M6 6l12 12"
+                        />
+                      </svg>
+                    </button>
+                    <p className="absolute bottom-1 left-1 right-1 truncate bg-black/70 px-1 py-0.5 text-xs text-white">
+                      {file.name}
+                    </p>
+                  </div>
                 ))}
-              </ul>
+              </div>
             </div>
           )}
         </div>
@@ -226,4 +268,3 @@ export default function CreateEventPage() {
     </div>
   );
 }
-
