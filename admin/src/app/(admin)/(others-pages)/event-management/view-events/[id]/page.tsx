@@ -5,6 +5,19 @@ import Link from "next/link";
 import { useParams } from "next/navigation";
 import { getEventServiceUrl } from "@/lib/eventClient";
 
+type Seat = {
+  type: string;
+  price: number;
+  row: number;
+  column: number;
+  seatNumber: string;
+  bookingStatus: "available" | "reserved" | "sold";
+  reservedUntil?: Date;
+  bookedBy?: string;
+  bookingTime?: Date;
+  features?: string[];
+};
+
 type EventDetail = {
   _id: string;
   title: string;
@@ -15,6 +28,7 @@ type EventDetail = {
   status?: string;
   tags?: string[];
   isSeated?: boolean;
+  seats?: Seat[];
   coverImage?: string;
   galleryImages?: string[];
   createdAt?: string;
@@ -77,6 +91,61 @@ export default function ViewSingleEventPage() {
   const goToGallerySlide = (index: number) => {
     setCurrentGallerySlide(index);
   };
+
+  // Calculate seat statistics from the seats array
+  const calculateSeatStats = () => {
+    if (!event.seats || event.seats.length === 0) {
+      return {
+        totalSeats: 0,
+        maxRows: 0,
+        maxCols: 0,
+        availableSeats: 0,
+        reservedSeats: 0,
+        soldSeats: 0,
+        avgPrice: 0,
+        seatTypes: [] as { type: string; count: number; price: number }[],
+      };
+    }
+
+    const maxRows = Math.max(...event.seats.map((s) => s.row), 0);
+    const maxCols = Math.max(...event.seats.map((s) => s.column), 0);
+    const availableSeats = event.seats.filter((s) => s.bookingStatus === "available").length;
+    const reservedSeats = event.seats.filter((s) => s.bookingStatus === "reserved").length;
+    const soldSeats = event.seats.filter((s) => s.bookingStatus === "sold").length;
+
+    const totalPrice = event.seats.reduce((sum, s) => sum + s.price, 0);
+    const avgPrice = event.seats.length > 0 ? totalPrice / event.seats.length : 0;
+
+    // Group seats by type
+    const seatTypeMap = new Map<
+      string,
+      { type: string; count: number; price: number }
+    >();
+    event.seats.forEach((seat) => {
+      if (!seatTypeMap.has(seat.type)) {
+        seatTypeMap.set(seat.type, {
+          type: seat.type,
+          count: 0,
+          price: seat.price,
+        });
+      }
+      const entry = seatTypeMap.get(seat.type)!;
+      entry.count += 1;
+    });
+
+    return {
+      totalSeats: event.seats.length,
+      maxRows,
+      maxCols,
+      availableSeats,
+      reservedSeats,
+      soldSeats,
+      avgPrice: Math.round(avgPrice),
+      seatTypes: Array.from(seatTypeMap.values()),
+    };
+  };
+
+  const seatStats = calculateSeatStats();
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
@@ -151,7 +220,9 @@ export default function ViewSingleEventPage() {
                           ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400"
                           : event.status === "completed"
                             ? "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400"
-                            : "bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300"
+                            : event.status === "cancelled"
+                              ? "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400"
+                              : "bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300"
                       }`}
                     >
                       {event.status || "-"}
@@ -170,10 +241,10 @@ export default function ViewSingleEventPage() {
 
                 <div className="rounded-lg border border-gray-100 bg-gray-50 p-4 dark:border-gray-700 dark:bg-gray-800/50">
                   <p className="text-xs font-medium uppercase tracking-wide text-gray-600 dark:text-gray-400">
-                    Seated
+                    Event Type
                   </p>
                   <p className="mt-1 text-sm font-medium text-gray-900 dark:text-white">
-                    {event.isSeated ? "Yes" : "No"}
+                    {event.isSeated ? "Seated Event" : "Standing Event"}
                   </p>
                 </div>
 
@@ -192,6 +263,140 @@ export default function ViewSingleEventPage() {
                   </p>
                   <p className="mt-1 text-sm font-medium text-gray-900 dark:text-white">
                     {new Date(event.end).toLocaleString()}
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Seat Configuration - Only show if event is seated and has seats */}
+            {event.isSeated && seatStats.totalSeats > 0 && (
+              <div>
+                <h2 className="mb-4 text-lg font-semibold text-gray-900 dark:text-white">
+                  Seat Configuration
+                </h2>
+
+                {/* Seat Overview Stats */}
+                <div className="mb-6 grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-5">
+                  <div className="rounded-lg border border-gray-100 bg-gray-50 p-4 dark:border-gray-700 dark:bg-gray-800/50">
+                    <p className="text-xs font-medium uppercase tracking-wide text-gray-600 dark:text-gray-400">
+                      Total Rows
+                    </p>
+                    <p className="mt-2 text-2xl font-bold text-gray-900 dark:text-white">
+                      {seatStats.maxRows}
+                    </p>
+                  </div>
+
+                  <div className="rounded-lg border border-gray-100 bg-gray-50 p-4 dark:border-gray-700 dark:bg-gray-800/50">
+                    <p className="text-xs font-medium uppercase tracking-wide text-gray-600 dark:text-gray-400">
+                      Columns per Row
+                    </p>
+                    <p className="mt-2 text-2xl font-bold text-gray-900 dark:text-white">
+                      {seatStats.maxCols}
+                    </p>
+                  </div>
+
+                  <div className="rounded-lg border border-gray-100 bg-gray-50 p-4 dark:border-gray-700 dark:bg-gray-800/50">
+                    <p className="text-xs font-medium uppercase tracking-wide text-gray-600 dark:text-gray-400">
+                      Average Price
+                    </p>
+                    <p className="mt-2 text-2xl font-bold text-green-600 dark:text-green-400">
+                      LKR {seatStats.avgPrice.toLocaleString()}
+                    </p>
+                  </div>
+
+                  <div className="rounded-lg border border-gray-100 bg-gray-50 p-4 dark:border-gray-700 dark:bg-gray-800/50">
+                    <p className="text-xs font-medium uppercase tracking-wide text-gray-600 dark:text-gray-400">
+                      Total Seats
+                    </p>
+                    <p className="mt-2 text-3xl font-bold text-brand-600 dark:text-brand-400">
+                      {seatStats.totalSeats.toLocaleString()}
+                    </p>
+                  </div>
+
+                  <div className="rounded-lg border-2 border-brand-200 bg-brand-50 p-4 dark:border-brand-700 dark:bg-brand-900/20">
+                    <p className="text-xs font-medium uppercase tracking-wide text-brand-600 dark:text-brand-400">
+                      Available Seats
+                    </p>
+                    <p className="mt-2 text-3xl font-bold text-brand-600 dark:text-brand-400">
+                      {seatStats.availableSeats.toLocaleString()}
+                    </p>
+                  </div>
+                </div>
+
+                {/* Seat Booking Status */}
+                <div className="mb-6 rounded-lg border border-gray-100 bg-gray-50 p-4 dark:border-gray-700 dark:bg-gray-800/50">
+                  <p className="mb-4 text-sm font-semibold text-gray-900 dark:text-white">
+                    Booking Status
+                  </p>
+                  <div className="grid grid-cols-3 gap-3">
+                    <div className="rounded-lg bg-white p-3 text-center dark:bg-gray-800">
+                      <p className="text-xs text-gray-600 dark:text-gray-400">Available</p>
+                      <p className="mt-1 text-2xl font-bold text-green-600 dark:text-green-400">
+                        {seatStats.availableSeats}
+                      </p>
+                    </div>
+                    <div className="rounded-lg bg-white p-3 text-center dark:bg-gray-800">
+                      <p className="text-xs text-gray-600 dark:text-gray-400">Reserved</p>
+                      <p className="mt-1 text-2xl font-bold text-yellow-600 dark:text-yellow-400">
+                        {seatStats.reservedSeats}
+                      </p>
+                    </div>
+                    <div className="rounded-lg bg-white p-3 text-center dark:bg-gray-800">
+                      <p className="text-xs text-gray-600 dark:text-gray-400">Sold</p>
+                      <p className="mt-1 text-2xl font-bold text-red-600 dark:text-red-400">
+                        {seatStats.soldSeats}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Seat Types Breakdown */}
+                {seatStats.seatTypes.length > 0 && (
+                  <div className="rounded-lg border border-gray-100 bg-gray-50 p-4 dark:border-gray-700 dark:bg-gray-800/50">
+                    <p className="mb-4 text-sm font-semibold text-gray-900 dark:text-white">
+                      Seat Types
+                    </p>
+                    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
+                      {seatStats.seatTypes.map((seatType, idx) => (
+                        <div key={idx} className="rounded-lg bg-white p-3 dark:bg-gray-800">
+                          <p className="text-xs font-medium text-gray-600 dark:text-gray-400">
+                            {seatType.type}
+                          </p>
+                          <p className="mt-1 text-lg font-bold text-brand-600 dark:text-brand-400">
+                            {seatType.count} seats
+                          </p>
+                          <p className="mt-1 text-sm font-medium text-gray-700 dark:text-gray-300">
+                            LKR {seatType.price.toLocaleString()} each
+                          </p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Created & Updated Details */}
+            <div>
+              <h2 className="mb-4 text-lg font-semibold text-gray-900 dark:text-white">
+                Timeline
+              </h2>
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                <div className="rounded-lg border border-gray-100 bg-gray-50 p-4 dark:border-gray-700 dark:bg-gray-800/50">
+                  <p className="text-xs font-medium uppercase tracking-wide text-gray-600 dark:text-gray-400">
+                    Created At
+                  </p>
+                  <p className="mt-2 text-sm font-medium text-gray-900 dark:text-white">
+                    {event.createdAt ? new Date(event.createdAt).toLocaleString() : "-"}
+                  </p>
+                </div>
+
+                <div className="rounded-lg border border-gray-100 bg-gray-50 p-4 dark:border-gray-700 dark:bg-gray-800/50">
+                  <p className="text-xs font-medium uppercase tracking-wide text-gray-600 dark:text-gray-400">
+                    Last Updated
+                  </p>
+                  <p className="mt-2 text-sm font-medium text-gray-900 dark:text-white">
+                    {event.updatedAt ? new Date(event.updatedAt).toLocaleString() : "-"}
                   </p>
                 </div>
               </div>
